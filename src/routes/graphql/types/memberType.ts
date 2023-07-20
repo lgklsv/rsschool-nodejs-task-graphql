@@ -1,5 +1,11 @@
 import { FastifyInstance } from 'fastify';
-import { GraphQLEnumType, GraphQLFloat, GraphQLInt, GraphQLObjectType } from 'graphql';
+import {
+  GraphQLEnumType,
+  GraphQLFloat,
+  GraphQLInt,
+  GraphQLList,
+  GraphQLObjectType,
+} from 'graphql';
 
 const MemberTypeIdEnum = new GraphQLEnumType({
   name: 'MemberTypeId',
@@ -23,7 +29,7 @@ const MemberType = new GraphQLObjectType({
 });
 
 const getMemberTypeByIdResolver = async (
-  _,
+  _parent,
   args: { id: string },
   fastify: FastifyInstance,
 ) => {
@@ -35,9 +41,17 @@ const getMemberTypeByIdResolver = async (
   return memberType;
 };
 
+const getMemberTypesResolver = async (_parent, _args, fastify: FastifyInstance) => {
+  return await fastify.prisma.memberType.findMany();
+};
+
 export const memberTypeByIdField = {
   type: MemberType,
   args: { id: { type: MemberTypeIdEnum } },
   resolve: getMemberTypeByIdResolver,
 };
 
+export const memberTypesField = {
+  type: new GraphQLList(MemberType),
+  resolve: getMemberTypesResolver,
+};
