@@ -4,6 +4,7 @@ import {
   GraphQLFloat,
   GraphQLInt,
   GraphQLList,
+  GraphQLNonNull,
   GraphQLObjectType,
 } from 'graphql';
 
@@ -52,6 +53,6 @@ export const memberTypeByIdField = {
 };
 
 export const memberTypesField = {
-  type: new GraphQLList(MemberType),
+  type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(MemberType))),
   resolve: getMemberTypesResolver,
 };
