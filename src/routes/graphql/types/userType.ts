@@ -18,7 +18,7 @@ const UserType = new GraphQLObjectType({
 });
 
 const getUsersResolver = async (_parent, _args, fastify: FastifyInstance) => {
-  return await fastify.prisma.memberType.findMany();
+  return await fastify.prisma.user.findMany();
 };
 
 export const usersField = {

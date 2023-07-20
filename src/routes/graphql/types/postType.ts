@@ -13,7 +13,7 @@ const PostsType = new GraphQLObjectType({
 });
 
 const getPostsResolver = async (_parent, _args, fastify: FastifyInstance) => {
-  return await fastify.prisma.memberType.findMany();
+  return await fastify.prisma.post.findMany();
 };
 
 export const postsField = {
