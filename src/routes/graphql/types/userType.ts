@@ -17,6 +17,7 @@ const UserType = new GraphQLObjectType({
   }),
 });
 
+// All Users
 const getUsersResolver = async (_parent, _args, fastify: FastifyInstance) => {
   return await fastify.prisma.user.findMany();
 };
@@ -24,4 +25,24 @@ const getUsersResolver = async (_parent, _args, fastify: FastifyInstance) => {
 export const usersField = {
   type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
   resolve: getUsersResolver,
+};
+
+// Users By Id
+const getUsersByIdResolver = async (
+  _parent,
+  args: { id: string },
+  fastify: FastifyInstance,
+) => {
+  const user = await fastify.prisma.user.findUnique({
+    where: {
+      id: args.id,
+    },
+  });
+  return user;
+};
+
+export const userByIdField = {
+  type: UserType,
+  args: { id: { type: UUIDType } },
+  resolve: getUsersByIdResolver,
 };

@@ -20,6 +20,7 @@ const ProfileType = new GraphQLObjectType({
   }),
 });
 
+// All Profiles
 const getProfilesResolver = async (_parent, _args, fastify: FastifyInstance) => {
   return await fastify.prisma.profile.findMany();
 };
@@ -27,4 +28,24 @@ const getProfilesResolver = async (_parent, _args, fastify: FastifyInstance) => 
 export const profilesField = {
   type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(ProfileType))),
   resolve: getProfilesResolver,
+};
+
+// Profiles By Id
+const getProfilesByIdResolver = async (
+  _parent,
+  args: { id: string },
+  fastify: FastifyInstance,
+) => {
+  const profile = await fastify.prisma.profile.findUnique({
+    where: {
+      id: args.id,
+    },
+  });
+  return profile;
+};
+
+export const profileByIdField = {
+  type: ProfileType,
+  args: { id: { type: UUIDType } },
+  resolve: getProfilesByIdResolver,
 };
