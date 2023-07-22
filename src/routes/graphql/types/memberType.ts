@@ -8,6 +8,8 @@ import {
   GraphQLObjectType,
 } from 'graphql';
 
+type MemberTypeId = 'basic' | 'business';
+
 export const MemberTypeIdEnum = new GraphQLEnumType({
   name: 'MemberTypeId',
   values: {
@@ -20,7 +22,7 @@ export const MemberTypeIdEnum = new GraphQLEnumType({
   },
 });
 
-const MemberType = new GraphQLObjectType({
+export const MemberType = new GraphQLObjectType({
   name: 'MemberType',
   fields: () => ({
     id: { type: MemberTypeIdEnum },
@@ -48,6 +50,19 @@ async function getMemberTypeByIdResolver(
   const memberType = await fastify.prisma.memberType.findUnique({
     where: {
       id: args.id,
+    },
+  });
+  return memberType;
+}
+
+export async function getMemberTypeByProfileIdResolver(
+  parent: { memberTypeId: MemberTypeId },
+  _args,
+  fastify: FastifyInstance,
+) {
+  const memberType = await fastify.prisma.memberType.findUnique({
+    where: {
+      id: parent.memberTypeId,
     },
   });
   return memberType;

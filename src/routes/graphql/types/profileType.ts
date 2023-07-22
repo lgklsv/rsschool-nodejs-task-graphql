@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { FastifyInstance } from 'fastify';
 import {
   GraphQLBoolean,
@@ -7,16 +8,24 @@ import {
   GraphQLObjectType,
 } from 'graphql';
 import { UUIDType } from './uuid.js';
-import { MemberTypeIdEnum } from './memberType.js';
+import {
+  MemberType,
+  MemberTypeIdEnum,
+  getMemberTypeByProfileIdResolver,
+} from './memberType.js';
+import { UserType, getUserByProfileIdResolver } from './userType.js';
 
 export const ProfileType = new GraphQLObjectType({
   name: 'ProfileType',
+  // @ts-ignore;
   fields: () => ({
     id: { type: UUIDType },
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
     userId: { type: UUIDType },
+    user: { type: UserType, resolve: getUserByProfileIdResolver },
     memberTypeId: { type: MemberTypeIdEnum },
+    memberType: { type: MemberType, resolve: getMemberTypeByProfileIdResolver },
   }),
 });
 
@@ -51,7 +60,7 @@ export async function getProfilesByUserIdResolver(
 ) {
   const profile = await fastify.prisma.profile.findUnique({
     where: {
-      id: parent.id,
+      userId: parent.id,
     },
   });
   return profile;

@@ -11,7 +11,7 @@ import { UUIDType } from './uuid.js';
 import { ProfileType, getProfilesByUserIdResolver } from './profileType.js';
 import { PostsType, getPostsByUserIdResolver } from './postType.js';
 
-const UserType = new GraphQLObjectType({
+export const UserType = new GraphQLObjectType({
   name: 'UserType',
   fields: () => ({
     id: { type: UUIDType },
@@ -84,6 +84,19 @@ async function userSubscribedToResolver(
       },
     },
   });
+}
+
+export async function getUserByProfileIdResolver(
+  parent: { userId: string },
+  _args,
+  fastify: FastifyInstance,
+) {
+  const user = await fastify.prisma.user.findUnique({
+    where: {
+      id: parent.userId,
+    },
+  });
+  return user;
 }
 
 export const userByIdField = {

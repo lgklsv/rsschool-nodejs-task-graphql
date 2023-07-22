@@ -41,9 +41,9 @@ export async function getPostsByUserIdResolver(
   _args,
   fastify: FastifyInstance,
 ) {
-  const post = await fastify.prisma.post.findUnique({
+  const post = await fastify.prisma.post.findMany({
     where: {
-      id: parent.id,
+      authorId: parent.id,
     },
   });
   return post;
