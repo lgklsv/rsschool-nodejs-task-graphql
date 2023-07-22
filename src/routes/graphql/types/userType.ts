@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { FastifyInstance } from 'fastify';
 import {
   GraphQLFloat,
@@ -18,13 +19,21 @@ const UserType = new GraphQLObjectType({
     balance: { type: GraphQLFloat },
     profile: { type: ProfileType, resolve: getProfilesByUserIdResolver },
     posts: { type: new GraphQLList(PostsType), resolve: getPostsByUserIdResolver },
+    subscribedToUser: {
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+      resolve: subscribedToUserResolver,
+    },
+    userSubscribedTo: {
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+      resolve: userSubscribedToResolver,
+    },
   }),
 });
 
 // All Users
-const getUsersResolver = async (_parent, _args, fastify: FastifyInstance) => {
+async function getUsersResolver(_parent, _args, fastify: FastifyInstance) {
   return await fastify.prisma.user.findMany();
-};
+}
 
 export const usersField = {
   type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
@@ -32,18 +41,50 @@ export const usersField = {
 };
 
 // Users By Id
-const getUsersByIdResolver = async (
+async function getUsersByIdResolver(
   _parent,
   args: { id: string },
   fastify: FastifyInstance,
-) => {
+) {
   const user = await fastify.prisma.user.findUnique({
     where: {
       id: args.id,
     },
   });
   return user;
-};
+}
+
+async function subscribedToUserResolver(
+  parent: { id: string },
+  _args,
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.user.findMany({
+    where: {
+      userSubscribedTo: {
+        some: {
+          authorId: parent.id,
+        },
+      },
+    },
+  });
+}
+
+async function userSubscribedToResolver(
+  parent: { id: string },
+  _args,
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.user.findMany({
+    where: {
+      subscribedToUser: {
+        some: {
+          subscriberId: parent.id,
+        },
+      },
+    },
+  });
+}
 
 export const userByIdField = {
   type: UserType,
