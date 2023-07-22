@@ -9,7 +9,7 @@ import {
 import { UUIDType } from './uuid.js';
 import { MemberTypeIdEnum } from './memberType.js';
 
-const ProfileType = new GraphQLObjectType({
+export const ProfileType = new GraphQLObjectType({
   name: 'ProfileType',
   fields: () => ({
     id: { type: UUIDType },
@@ -39,6 +39,19 @@ const getProfilesByIdResolver = async (
   const profile = await fastify.prisma.profile.findUnique({
     where: {
       id: args.id,
+    },
+  });
+  return profile;
+};
+
+export const getProfilesByUserIdResolver = async (
+  parent: { id: string },
+  _args,
+  fastify: FastifyInstance,
+) => {
+  const profile = await fastify.prisma.profile.findUnique({
+    where: {
+      id: parent.id,
     },
   });
   return profile;

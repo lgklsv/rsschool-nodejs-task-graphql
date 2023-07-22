@@ -7,6 +7,8 @@ import {
   GraphQLString,
 } from 'graphql';
 import { UUIDType } from './uuid.js';
+import { ProfileType, getProfilesByUserIdResolver } from './profileType.js';
+import { PostsType, getPostsByUserIdResolver } from './postType.js';
 
 const UserType = new GraphQLObjectType({
   name: 'UserType',
@@ -14,6 +16,8 @@ const UserType = new GraphQLObjectType({
     id: { type: UUIDType },
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
+    profile: { type: ProfileType, resolve: getProfilesByUserIdResolver },
+    posts: { type: new GraphQLList(PostsType), resolve: getPostsByUserIdResolver },
   }),
 });
 
