@@ -30,9 +30,9 @@ const MemberType = new GraphQLObjectType({
 });
 
 // All members
-const getMemberTypesResolver = async (_parent, _args, fastify: FastifyInstance) => {
+async function getMemberTypesResolver(_parent, _args, fastify: FastifyInstance) {
   return await fastify.prisma.memberType.findMany();
-};
+}
 
 export const memberTypesField = {
   type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(MemberType))),
@@ -40,18 +40,18 @@ export const memberTypesField = {
 };
 
 // Get Members By Id
-const getMemberTypeByIdResolver = async (
+async function getMemberTypeByIdResolver(
   _parent,
   args: { id: string },
   fastify: FastifyInstance,
-) => {
+) {
   const memberType = await fastify.prisma.memberType.findUnique({
     where: {
       id: args.id,
     },
   });
   return memberType;
-};
+}
 
 export const memberTypeByIdField = {
   type: MemberType,

@@ -13,9 +13,9 @@ export const PostsType = new GraphQLObjectType({
 });
 
 // All Posts
-const getPostsResolver = async (_parent, _args, fastify: FastifyInstance) => {
+async function getPostsResolver(_parent, _args, fastify: FastifyInstance) {
   return await fastify.prisma.post.findMany();
-};
+}
 
 export const postsField = {
   type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostsType))),
@@ -23,31 +23,31 @@ export const postsField = {
 };
 
 // Posts By Id
-const getPostByIdResolver = async (
+async function getPostByIdResolver(
   _parent,
   args: { id: string },
   fastify: FastifyInstance,
-) => {
+) {
   const post = await fastify.prisma.post.findUnique({
     where: {
       id: args.id,
     },
   });
   return post;
-};
+}
 
-export const getPostsByUserIdResolver = async (
+export async function getPostsByUserIdResolver(
   parent: { id: string },
   _args,
   fastify: FastifyInstance,
-) => {
+) {
   const post = await fastify.prisma.post.findUnique({
     where: {
       id: parent.id,
     },
   });
   return post;
-};
+}
 
 export const postByIdField = {
   type: PostsType,
