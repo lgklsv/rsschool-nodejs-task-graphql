@@ -8,7 +8,7 @@ import {
   GraphQLObjectType,
 } from 'graphql';
 
-type MemberTypeId = 'basic' | 'business';
+export type MemberTypeId = 'basic' | 'business';
 
 export const MemberTypeIdEnum = new GraphQLEnumType({
   name: 'MemberTypeId',

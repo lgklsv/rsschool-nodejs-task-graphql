@@ -2,6 +2,7 @@
 import { FastifyInstance } from 'fastify';
 import {
   GraphQLBoolean,
+  GraphQLInputObjectType,
   GraphQLInt,
   GraphQLList,
   GraphQLNonNull,
@@ -10,6 +11,7 @@ import {
 import { UUIDType } from './uuid.js';
 import {
   MemberType,
+  MemberTypeId,
   MemberTypeIdEnum,
   getMemberTypeByProfileIdResolver,
 } from './memberType.js';
@@ -63,6 +65,44 @@ export async function getProfilesByUserIdResolver(
     },
   });
 }
+
+// Mutations(create)
+const CreateProfileArgs = new GraphQLInputObjectType({
+  name: 'CreateProfileArgs',
+  fields: () => ({
+    isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
+    yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
+    userId: { type: new GraphQLNonNull(UUIDType) },
+    memberTypeId: { type: new GraphQLNonNull(MemberTypeIdEnum) },
+  }),
+});
+
+async function createProfileResolver(
+  _parent,
+  args: {
+    dto: {
+      isMale: boolean;
+      yearOfBirth: number;
+      userId: string;
+      memberTypeId: MemberTypeId;
+    };
+  },
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.profile.create({
+    data: args.dto,
+  });
+}
+
+export const createProfileField = {
+  type: ProfileType,
+  args: {
+    dto: {
+      type: new GraphQLNonNull(CreateProfileArgs),
+    },
+  },
+  resolve: createProfileResolver,
+};
 
 export const profileByIdField = {
   type: ProfileType,
