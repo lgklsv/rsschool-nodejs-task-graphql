@@ -132,7 +132,6 @@ async function deletePostResolver(
       id: args.id,
     },
   });
-  return null;
 }
 
 export const deletePostField = {

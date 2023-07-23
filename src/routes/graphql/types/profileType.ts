@@ -156,7 +156,6 @@ async function deleteProfileResolver(
       id: args.id,
     },
   });
-  return null;
 }
 
 export const deleteProfileField = {

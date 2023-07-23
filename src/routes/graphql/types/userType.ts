@@ -174,7 +174,6 @@ async function deleteUserResolver(
   await fastify.prisma.user.delete({
     where: { id: args.id },
   });
-  return null;
 }
 
 export const deleteUserField = {
@@ -183,4 +182,58 @@ export const deleteUserField = {
     id: { type: new GraphQLNonNull(UUIDType) },
   },
   resolve: deleteUserResolver,
+};
+
+// Mutations (subscribeTo)
+async function subscribeToResolver(
+  _parent,
+  args: { userId: string; authorId: string },
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.user.update({
+    where: { id: args.userId },
+    data: {
+      userSubscribedTo: {
+        create: {
+          authorId: args.authorId,
+        },
+      },
+    },
+  });
+}
+
+export const subscribeToField = {
+  type: UserType,
+  args: {
+    userId: { type: new GraphQLNonNull(UUIDType) },
+    authorId: { type: new GraphQLNonNull(UUIDType) },
+  },
+  resolve: subscribeToResolver,
+};
+
+// Mutations (unsubscribeFrom)
+async function unsubscribeFromResolver(
+  _parent,
+  args: { userId: string; authorId: string },
+  fastify: FastifyInstance,
+) {
+  await fastify.prisma.user.update({
+    where: { id: args.userId },
+    data: {
+      userSubscribedTo: {
+        deleteMany: {
+          authorId: args.authorId,
+        },
+      },
+    },
+  });
+}
+
+export const unsubscribeFromField = {
+  type: GraphQLBoolean,
+  args: {
+    userId: { type: new GraphQLNonNull(UUIDType) },
+    authorId: { type: new GraphQLNonNull(UUIDType) },
+  },
+  resolve: unsubscribeFromResolver,
 };
