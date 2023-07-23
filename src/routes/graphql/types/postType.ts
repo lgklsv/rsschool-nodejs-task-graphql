@@ -1,5 +1,11 @@
 import { FastifyInstance } from 'fastify';
-import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
+import {
+  GraphQLInputObjectType,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLString,
+} from 'graphql';
 import { UUIDType } from './uuid.js';
 
 export const PostsType: GraphQLObjectType = new GraphQLObjectType({
@@ -46,6 +52,36 @@ export async function getPostsByUserIdResolver(
     },
   });
 }
+
+// Mutations(create)
+const CreatePostArgs = new GraphQLInputObjectType({
+  name: 'CreatePostArgs',
+  fields: () => ({
+    title: { type: new GraphQLNonNull(GraphQLString) },
+    content: { type: new GraphQLNonNull(GraphQLString) },
+    authorId: { type: new GraphQLNonNull(UUIDType) },
+  }),
+});
+
+async function createPostResolver(
+  _parent,
+  args: { dto: { title: string; content: string; authorId: string } },
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.post.create({
+    data: args.dto,
+  });
+}
+
+export const createPostField = {
+  type: PostsType,
+  args: {
+    dto: {
+      type: new GraphQLNonNull(CreatePostArgs),
+    },
+  },
+  resolve: createPostResolver,
+};
 
 export const postByIdField = {
   type: PostsType,
