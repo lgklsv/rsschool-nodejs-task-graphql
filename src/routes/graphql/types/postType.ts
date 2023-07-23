@@ -41,6 +41,12 @@ async function getPostByIdResolver(
   });
 }
 
+export const postByIdField = {
+  type: PostsType,
+  args: { id: { type: UUIDType } },
+  resolve: getPostByIdResolver,
+};
+
 export async function getPostsByUserIdResolver(
   parent: { id: string },
   _args,
@@ -55,7 +61,7 @@ export async function getPostsByUserIdResolver(
 
 // Mutations(create)
 const CreatePostArgs = new GraphQLInputObjectType({
-  name: 'CreatePostArgs',
+  name: 'CreatePostInput',
   fields: () => ({
     title: { type: new GraphQLNonNull(GraphQLString) },
     content: { type: new GraphQLNonNull(GraphQLString) },
@@ -83,8 +89,33 @@ export const createPostField = {
   resolve: createPostResolver,
 };
 
-export const postByIdField = {
+// Mutations (update)
+async function updatePostResolver(
+  _parent,
+  args: { id: string; dto: { title: string; content: string } },
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.post.update({
+    where: { id: args.id },
+    data: args.dto,
+  });
+}
+
+const UpdatePostArgs = new GraphQLInputObjectType({
+  name: 'ChangePostInput',
+  fields: () => ({
+    title: { type: GraphQLString },
+    content: { type: GraphQLString },
+  }),
+});
+
+export const updatePostField = {
   type: PostsType,
-  args: { id: { type: UUIDType } },
-  resolve: getPostByIdResolver,
+  args: {
+    id: { type: new GraphQLNonNull(UUIDType) },
+    dto: {
+      type: new GraphQLNonNull(UpdatePostArgs),
+    },
+  },
+  resolve: updatePostResolver,
 };

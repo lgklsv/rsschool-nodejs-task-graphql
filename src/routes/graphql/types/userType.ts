@@ -54,6 +54,12 @@ async function getUsersByIdResolver(
   });
 }
 
+export const userByIdField = {
+  type: UserType,
+  args: { id: { type: UUIDType } },
+  resolve: getUsersByIdResolver,
+};
+
 async function subscribedToUserResolver(
   parent: { id: string },
   _args,
@@ -110,7 +116,7 @@ async function createUserResolver(
 }
 
 const CreateUserArgs = new GraphQLInputObjectType({
-  name: 'CreateUserArgs',
+  name: 'CreateUserInput',
   fields: () => ({
     name: { type: new GraphQLNonNull(GraphQLString) },
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -127,8 +133,33 @@ export const createUserField = {
   resolve: createUserResolver,
 };
 
-export const userByIdField = {
+// Mutations (update)
+async function updateUserResolver(
+  _parent,
+  args: { id: string; dto: { name?: string; balance?: number } },
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.user.update({
+    where: { id: args.id },
+    data: args.dto,
+  });
+}
+
+const UpdateUserArgs = new GraphQLInputObjectType({
+  name: 'ChangeUserInput',
+  fields: () => ({
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
+  }),
+});
+
+export const updateUserField = {
   type: UserType,
-  args: { id: { type: UUIDType } },
-  resolve: getUsersByIdResolver,
+  args: {
+    id: { type: new GraphQLNonNull(UUIDType) },
+    dto: {
+      type: new GraphQLNonNull(UpdateUserArgs),
+    },
+  },
+  resolve: updateUserResolver,
 };

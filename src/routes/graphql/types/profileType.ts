@@ -54,6 +54,12 @@ async function getProfilesByIdResolver(
   });
 }
 
+export const profileByIdField = {
+  type: ProfileType,
+  args: { id: { type: UUIDType } },
+  resolve: getProfilesByIdResolver,
+};
+
 export async function getProfilesByUserIdResolver(
   parent: { id: string },
   _args,
@@ -68,7 +74,7 @@ export async function getProfilesByUserIdResolver(
 
 // Mutations(create)
 const CreateProfileArgs = new GraphQLInputObjectType({
-  name: 'CreateProfileArgs',
+  name: 'CreateProfileInput',
   fields: () => ({
     isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
     yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
@@ -104,8 +110,37 @@ export const createProfileField = {
   resolve: createProfileResolver,
 };
 
-export const profileByIdField = {
+// Mutations (update)
+async function updateProfileResolver(
+  _parent,
+  args: {
+    id: string;
+    dto: { isMale: boolean; yearOfBirth: number; memberTypeId: MemberTypeId };
+  },
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.profile.update({
+    where: { id: args.id },
+    data: args.dto,
+  });
+}
+
+const UpdateProfileArgs = new GraphQLInputObjectType({
+  name: 'ChangeProfileInput',
+  fields: () => ({
+    isMale: { type: GraphQLBoolean },
+    yearOfBirth: { type: GraphQLInt },
+    memberTypeId: { type: MemberTypeIdEnum },
+  }),
+});
+
+export const updateProfileField = {
   type: ProfileType,
-  args: { id: { type: UUIDType } },
-  resolve: getProfilesByIdResolver,
+  args: {
+    id: { type: new GraphQLNonNull(UUIDType) },
+    dto: {
+      type: new GraphQLNonNull(UpdateProfileArgs),
+    },
+  },
+  resolve: updateProfileResolver,
 };
