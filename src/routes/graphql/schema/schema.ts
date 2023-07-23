@@ -1,25 +1,10 @@
-import { GraphQLObjectType, GraphQLSchema } from 'graphql';
-import { memberTypeByIdField, memberTypesField } from '../types/memberType.js';
-import { postByIdField, postsField } from '../types/postType.js';
-import { userByIdField, usersField } from '../types/userType.js';
-import { profileByIdField, profilesField } from '../types/profileType.js';
-
-const RootQuery = new GraphQLObjectType({
-  name: 'RootQuery',
-  fields: {
-    memberType: memberTypeByIdField,
-    memberTypes: memberTypesField,
-    post: postByIdField,
-    posts: postsField,
-    profile: profileByIdField,
-    profiles: profilesField,
-    user: userByIdField,
-    users: usersField,
-  },
-});
+import { GraphQLSchema } from 'graphql';
+import { RootQuery } from './query.js';
+import { Mutation } from './mutation.js';
 
 const schema = new GraphQLSchema({
   query: RootQuery,
+  mutation: Mutation,
 });
 
 export default schema;

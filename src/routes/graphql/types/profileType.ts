@@ -15,7 +15,7 @@ import {
 } from './memberType.js';
 import { UserType, getUserByProfileIdResolver } from './userType.js';
 
-export const ProfileType = new GraphQLObjectType({
+export const ProfileType: GraphQLObjectType = new GraphQLObjectType({
   name: 'ProfileType',
   // @ts-ignore;
   fields: () => ({
@@ -45,12 +45,11 @@ async function getProfilesByIdResolver(
   args: { id: string },
   fastify: FastifyInstance,
 ) {
-  const profile = await fastify.prisma.profile.findUnique({
+  return await fastify.prisma.profile.findUnique({
     where: {
       id: args.id,
     },
   });
-  return profile;
 }
 
 export async function getProfilesByUserIdResolver(
@@ -58,12 +57,11 @@ export async function getProfilesByUserIdResolver(
   _args,
   fastify: FastifyInstance,
 ) {
-  const profile = await fastify.prisma.profile.findUnique({
+  return await fastify.prisma.profile.findUnique({
     where: {
       userId: parent.id,
     },
   });
-  return profile;
 }
 
 export const profileByIdField = {

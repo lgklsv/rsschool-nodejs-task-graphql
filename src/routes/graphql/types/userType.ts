@@ -2,6 +2,7 @@
 import { FastifyInstance } from 'fastify';
 import {
   GraphQLFloat,
+  GraphQLInputObjectType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
@@ -11,7 +12,7 @@ import { UUIDType } from './uuid.js';
 import { ProfileType, getProfilesByUserIdResolver } from './profileType.js';
 import { PostsType, getPostsByUserIdResolver } from './postType.js';
 
-export const UserType = new GraphQLObjectType({
+export const UserType: GraphQLObjectType = new GraphQLObjectType({
   name: 'UserType',
   fields: () => ({
     id: { type: UUIDType },
@@ -46,12 +47,11 @@ async function getUsersByIdResolver(
   args: { id: string },
   fastify: FastifyInstance,
 ) {
-  const user = await fastify.prisma.user.findUnique({
+  return await fastify.prisma.user.findUnique({
     where: {
       id: args.id,
     },
   });
-  return user;
 }
 
 async function subscribedToUserResolver(
@@ -91,13 +91,41 @@ export async function getUserByProfileIdResolver(
   _args,
   fastify: FastifyInstance,
 ) {
-  const user = await fastify.prisma.user.findUnique({
+  return await fastify.prisma.user.findUnique({
     where: {
       id: parent.userId,
     },
   });
-  return user;
 }
+
+// Mutations (create)
+async function createUserResolver(
+  _parent,
+  args: { dto: { name: string; balance: number } },
+  fastify: FastifyInstance,
+) {
+  return fastify.prisma.user.create({
+    data: args.dto,
+  });
+}
+
+const CreateUserArgs = new GraphQLInputObjectType({
+  name: 'CreateUserArgs',
+  fields: () => ({
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    balance: { type: new GraphQLNonNull(GraphQLFloat) },
+  }),
+});
+
+export const createUserField = {
+  type: UserType,
+  args: {
+    dto: {
+      type: new GraphQLNonNull(CreateUserArgs),
+    },
+  },
+  resolve: createUserResolver,
+};
 
 export const userByIdField = {
   type: UserType,

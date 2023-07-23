@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
 import { UUIDType } from './uuid.js';
 
-export const PostsType = new GraphQLObjectType({
+export const PostsType: GraphQLObjectType = new GraphQLObjectType({
   name: 'PostsType',
   fields: () => ({
     id: { type: UUIDType },
@@ -28,12 +28,11 @@ async function getPostByIdResolver(
   args: { id: string },
   fastify: FastifyInstance,
 ) {
-  const post = await fastify.prisma.post.findUnique({
+  return await fastify.prisma.post.findUnique({
     where: {
       id: args.id,
     },
   });
-  return post;
 }
 
 export async function getPostsByUserIdResolver(
@@ -41,12 +40,11 @@ export async function getPostsByUserIdResolver(
   _args,
   fastify: FastifyInstance,
 ) {
-  const post = await fastify.prisma.post.findMany({
+  return await fastify.prisma.post.findMany({
     where: {
       authorId: parent.id,
     },
   });
-  return post;
 }
 
 export const postByIdField = {
