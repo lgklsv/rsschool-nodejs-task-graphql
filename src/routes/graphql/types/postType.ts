@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import {
+  GraphQLBoolean,
   GraphQLInputObjectType,
   GraphQLList,
   GraphQLNonNull,
@@ -118,4 +119,26 @@ export const updatePostField = {
     },
   },
   resolve: updatePostResolver,
+};
+
+// Mutations (delete)
+async function deletePostResolver(
+  _parent,
+  args: { id: string },
+  fastify: FastifyInstance,
+) {
+  await fastify.prisma.post.delete({
+    where: {
+      id: args.id,
+    },
+  });
+  return null;
+}
+
+export const deletePostField = {
+  type: GraphQLBoolean,
+  args: {
+    id: { type: new GraphQLNonNull(UUIDType) },
+  },
+  resolve: deletePostResolver,
 };

@@ -144,3 +144,25 @@ export const updateProfileField = {
   },
   resolve: updateProfileResolver,
 };
+
+// Mutations (delete)
+async function deleteProfileResolver(
+  _parent,
+  args: { id: string },
+  fastify: FastifyInstance,
+) {
+  await fastify.prisma.profile.delete({
+    where: {
+      id: args.id,
+    },
+  });
+  return null;
+}
+
+export const deleteProfileField = {
+  type: GraphQLBoolean,
+  args: {
+    id: { type: new GraphQLNonNull(UUIDType) },
+  },
+  resolve: deleteProfileResolver,
+};

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { FastifyInstance } from 'fastify';
 import {
+  GraphQLBoolean,
   GraphQLFloat,
   GraphQLInputObjectType,
   GraphQLList,
@@ -162,4 +163,24 @@ export const updateUserField = {
     },
   },
   resolve: updateUserResolver,
+};
+
+// Mutations (delete)
+async function deleteUserResolver(
+  _parent,
+  args: { id: string },
+  fastify: FastifyInstance,
+) {
+  await fastify.prisma.user.delete({
+    where: { id: args.id },
+  });
+  return null;
+}
+
+export const deleteUserField = {
+  type: GraphQLBoolean,
+  args: {
+    id: { type: new GraphQLNonNull(UUIDType) },
+  },
+  resolve: deleteUserResolver,
 };
