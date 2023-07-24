@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   GraphQLBoolean,
   GraphQLFloat,
@@ -6,12 +5,34 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
+  GraphQLResolveInfo,
   GraphQLString,
 } from 'graphql';
 import { UUIDType } from './uuid.js';
 import { ProfileType, getProfilesByUserIdResolver } from './profileType.js';
 import { PostsType, getPostsByUserIdResolver } from './postType.js';
 import { ContextType } from '../schema/context.js';
+import { FastifyInstance } from 'fastify';
+import DataLoader from 'dataloader';
+import {
+  ResolveTree,
+  parseResolveInfo,
+  simplifyParsedResolveInfoFragmentWithType,
+} from 'graphql-parse-resolve-info';
+
+export interface IUserType {
+  id: string;
+  name: string;
+  balance: number;
+  subscribedToUser?: {
+    authorId: string;
+    subscriberId: string;
+  }[];
+  userSubscribedTo?: {
+    subscriberId: string;
+    authorId: string;
+  }[];
+}
 
 export const UserType: GraphQLObjectType = new GraphQLObjectType({
   name: 'UserType',
@@ -33,8 +54,29 @@ export const UserType: GraphQLObjectType = new GraphQLObjectType({
 });
 
 // All Users
-async function getUsersResolver(_parent, _args, ctx: ContextType) {
-  return await ctx.fastify.prisma.user.findMany();
+async function getUsersResolver(
+  _parent,
+  _args,
+  ctx: ContextType,
+  resolveInfo: GraphQLResolveInfo,
+) {
+  const parsedResolveInfoFragment = parseResolveInfo(resolveInfo) as ResolveTree;
+  const { fields } = simplifyParsedResolveInfoFragmentWithType(
+    parsedResolveInfoFragment,
+    new GraphQLList(UserType),
+  );
+  const users = await ctx.fastify.prisma.user.findMany({
+    include: {
+      subscribedToUser: 'subscribedToUser' in fields && !!fields.subscribedToUser,
+      userSubscribedTo: 'userSubscribedTo' in fields && !!fields.userSubscribedTo,
+    },
+  });
+
+  users.forEach((res) => {
+    ctx.dataLoaders.user.prime(res.id, res);
+  });
+
+  return users;
 }
 
 export const usersField = {
@@ -44,11 +86,7 @@ export const usersField = {
 
 // Users By Id
 async function getUsersByIdResolver(_parent, args: { id: string }, ctx: ContextType) {
-  return await ctx.fastify.prisma.user.findUnique({
-    where: {
-      id: args.id,
-    },
-  });
+  return await ctx.dataLoaders.user.load(args.id);
 }
 
 export const userByIdField = {
@@ -57,28 +95,34 @@ export const userByIdField = {
   resolve: getUsersByIdResolver,
 };
 
-async function subscribedToUserResolver(parent: { id: string }, _args, ctx: ContextType) {
-  return ctx.fastify.prisma.user.findMany({
-    where: {
-      userSubscribedTo: {
-        some: {
-          authorId: parent.id,
-        },
-      },
-    },
-  });
+async function subscribedToUserResolver(parent: IUserType, _args, ctx: ContextType) {
+  if (Array.isArray(parent.subscribedToUser)) {
+    const ids = parent.subscribedToUser.map(
+      (item) =>
+        (
+          item as {
+            authorId: string;
+            subscriberId: string;
+          }
+        ).subscriberId,
+    );
+    return await ctx.dataLoaders.user.loadMany(ids);
+  }
 }
 
-async function userSubscribedToResolver(parent: { id: string }, _args, ctx: ContextType) {
-  return ctx.fastify.prisma.user.findMany({
-    where: {
-      subscribedToUser: {
-        some: {
-          subscriberId: parent.id,
-        },
-      },
-    },
-  });
+async function userSubscribedToResolver(parent: IUserType, _args, ctx: ContextType) {
+  if (Array.isArray(parent.userSubscribedTo)) {
+    const ids = parent.userSubscribedTo.map(
+      (item) =>
+        (
+          item as {
+            authorId: string;
+            subscriberId: string;
+          }
+        ).authorId,
+    );
+    return ctx.dataLoaders.user.loadMany(ids);
+  }
 }
 
 export async function getUserByProfileIdResolver(
@@ -221,3 +265,27 @@ export const unsubscribeFromField = {
   },
   resolve: unsubscribeFromResolver,
 };
+
+// Data loaders
+export function userDataLoader(fastify: FastifyInstance) {
+  return new DataLoader(async (ids: readonly string[]) => {
+    const users = await fastify.prisma.user.findMany({
+      where: {
+        id: {
+          in: ids as string[],
+        },
+      },
+      include: {
+        userSubscribedTo: true,
+        subscribedToUser: true,
+      },
+    });
+
+    const usersToMap: { [key: string]: IUserType } = users.reduce((mapping, user) => {
+      mapping[user.id] = user;
+      return mapping;
+    }, {});
+
+    return ids.map((id) => usersToMap[id]);
+  });
+}
