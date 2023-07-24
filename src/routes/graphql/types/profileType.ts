@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { FastifyInstance } from 'fastify';
 import {
   GraphQLBoolean,
   GraphQLInputObjectType,
@@ -16,6 +15,7 @@ import {
   getMemberTypeByProfileIdResolver,
 } from './memberType.js';
 import { UserType, getUserByProfileIdResolver } from './userType.js';
+import { ContextType } from '../schema/context.js';
 
 export const ProfileType: GraphQLObjectType = new GraphQLObjectType({
   name: 'ProfileType',
@@ -32,8 +32,8 @@ export const ProfileType: GraphQLObjectType = new GraphQLObjectType({
 });
 
 // All Profiles
-async function getProfilesResolver(_parent, _args, fastify: FastifyInstance) {
-  return await fastify.prisma.profile.findMany();
+async function getProfilesResolver(_parent, _args, ctx: ContextType) {
+  return await ctx.fastify.prisma.profile.findMany();
 }
 
 export const profilesField = {
@@ -42,12 +42,8 @@ export const profilesField = {
 };
 
 // Profiles By Id
-async function getProfilesByIdResolver(
-  _parent,
-  args: { id: string },
-  fastify: FastifyInstance,
-) {
-  return await fastify.prisma.profile.findUnique({
+async function getProfilesByIdResolver(_parent, args: { id: string }, ctx: ContextType) {
+  return await ctx.fastify.prisma.profile.findUnique({
     where: {
       id: args.id,
     },
@@ -63,9 +59,9 @@ export const profileByIdField = {
 export async function getProfilesByUserIdResolver(
   parent: { id: string },
   _args,
-  fastify: FastifyInstance,
+  ctx: ContextType,
 ) {
-  return await fastify.prisma.profile.findUnique({
+  return await ctx.fastify.prisma.profile.findUnique({
     where: {
       userId: parent.id,
     },
@@ -93,9 +89,9 @@ async function createProfileResolver(
       memberTypeId: MemberTypeId;
     };
   },
-  fastify: FastifyInstance,
+  ctx: ContextType,
 ) {
-  return fastify.prisma.profile.create({
+  return ctx.fastify.prisma.profile.create({
     data: args.dto,
   });
 }
@@ -117,9 +113,9 @@ async function updateProfileResolver(
     id: string;
     dto: { isMale: boolean; yearOfBirth: number; memberTypeId: MemberTypeId };
   },
-  fastify: FastifyInstance,
+  ctx: ContextType,
 ) {
-  return fastify.prisma.profile.update({
+  return ctx.fastify.prisma.profile.update({
     where: { id: args.id },
     data: args.dto,
   });
@@ -146,12 +142,8 @@ export const updateProfileField = {
 };
 
 // Mutations (delete)
-async function deleteProfileResolver(
-  _parent,
-  args: { id: string },
-  fastify: FastifyInstance,
-) {
-  await fastify.prisma.profile.delete({
+async function deleteProfileResolver(_parent, args: { id: string }, ctx: ContextType) {
+  await ctx.fastify.prisma.profile.delete({
     where: {
       id: args.id,
     },

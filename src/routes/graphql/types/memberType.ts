@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import DataLoader from 'dataloader';
 import {
   GraphQLEnumType,
   GraphQLFloat,
@@ -7,6 +7,8 @@ import {
   GraphQLNonNull,
   GraphQLObjectType,
 } from 'graphql';
+import { ContextType } from '../schema/context.js';
+import { FastifyInstance } from 'fastify';
 
 export type MemberTypeId = 'basic' | 'business';
 
@@ -32,8 +34,8 @@ export const MemberType = new GraphQLObjectType({
 });
 
 // All members
-async function getMemberTypesResolver(_parent, _args, fastify: FastifyInstance) {
-  return await fastify.prisma.memberType.findMany();
+async function getMemberTypesResolver(_parent, _args, ctx: ContextType) {
+  return await ctx.fastify.prisma.memberType.findMany();
 }
 
 export const memberTypesField = {
@@ -45,9 +47,9 @@ export const memberTypesField = {
 async function getMemberTypeByIdResolver(
   _parent,
   args: { id: string },
-  fastify: FastifyInstance,
+  ctx: ContextType,
 ) {
-  return await fastify.prisma.memberType.findUnique({
+  return await ctx.fastify.prisma.memberType.findUnique({
     where: {
       id: args.id,
     },
@@ -63,11 +65,35 @@ export const memberTypeByIdField = {
 export async function getMemberTypeByProfileIdResolver(
   parent: { memberTypeId: MemberTypeId },
   _args,
-  fastify: FastifyInstance,
+  ctx: ContextType,
 ) {
-  return await fastify.prisma.memberType.findUnique({
-    where: {
-      id: parent.memberTypeId,
-    },
+  return await ctx.dataLoaders.memberType.load(parent.memberTypeId);
+}
+
+export interface IMemberType {
+  id: MemberTypeId;
+  discount: number;
+  postsLimitPerMonth: number;
+}
+
+// Data loader
+export function memberTypesDataLoader(fastify: FastifyInstance) {
+  return new DataLoader(async (memberTypeIds: readonly string[]) => {
+    const memberTypes = await fastify.prisma.memberType.findMany({
+      where: {
+        id: {
+          in: memberTypeIds as string[],
+        },
+      },
+    });
+
+    const memberTypeIdsToMap: { [key: string]: IMemberType } = memberTypes.reduce(
+      (mapping, memberType) => {
+        mapping[memberType.id] = memberType;
+        return mapping;
+      },
+      {},
+    );
+    return memberTypeIds.map((id) => memberTypeIdsToMap[id]);
   });
 }
