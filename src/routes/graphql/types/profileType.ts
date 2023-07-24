@@ -18,6 +18,13 @@ import {
 import { UserType, getUserByProfileIdResolver } from './userType.js';
 import { ContextType } from '../schema/context.js';
 
+export interface IProfileType {
+  isMale: boolean;
+  yearOfBirth: number;
+  userId: string;
+  memberTypeId: MemberTypeId;
+}
+
 export const ProfileType: GraphQLObjectType = new GraphQLObjectType({
   name: 'ProfileType',
   // @ts-ignore;
@@ -80,12 +87,7 @@ const CreateProfileArgs = new GraphQLInputObjectType({
 async function createProfileResolver(
   _parent,
   args: {
-    dto: {
-      isMale: boolean;
-      yearOfBirth: number;
-      userId: string;
-      memberTypeId: MemberTypeId;
-    };
+    dto: IProfileType;
   },
   ctx: ContextType,
 ) {
