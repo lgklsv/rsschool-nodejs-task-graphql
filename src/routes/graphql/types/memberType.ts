@@ -62,6 +62,7 @@ export const memberTypeByIdField = {
   resolve: getMemberTypeByIdResolver,
 };
 
+// From parent resolvers
 export async function getMemberTypeByProfileIdResolver(
   parent: { memberTypeId: MemberTypeId },
   _args,

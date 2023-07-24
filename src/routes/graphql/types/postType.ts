@@ -8,6 +8,15 @@ import {
 } from 'graphql';
 import { UUIDType } from './uuid.js';
 import { ContextType } from '../schema/context.js';
+import { FastifyInstance } from 'fastify';
+import DataLoader from 'dataloader';
+
+export interface IPostType {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+}
 
 export const PostsType: GraphQLObjectType = new GraphQLObjectType({
   name: 'PostsType',
@@ -44,16 +53,13 @@ export const postByIdField = {
   resolve: getPostByIdResolver,
 };
 
+// From parent resolvers
 export async function getPostsByUserIdResolver(
   parent: { id: string },
   _args,
   ctx: ContextType,
 ) {
-  return await ctx.fastify.prisma.post.findMany({
-    where: {
-      authorId: parent.id,
-    },
-  });
+  return await ctx.dataLoaders.post.load(parent.id);
 }
 
 // Mutations(create)
@@ -133,3 +139,26 @@ export const deletePostField = {
   },
   resolve: deletePostResolver,
 };
+
+// Data loader
+export function postsDataLoader(fastify: FastifyInstance) {
+  return new DataLoader(async (postIds: readonly string[]) => {
+    const posts = await fastify.prisma.post.findMany({
+      where: {
+        authorId: {
+          in: postIds as string[],
+        },
+      },
+    });
+
+    const postIdsToMap: { [key: string]: IPostType[] } = posts.reduce((mapping, post) => {
+      const prevPosts = (mapping[post.authorId] || []) as IPostType[];
+
+      prevPosts.push(post);
+
+      mapping[post.authorId] = prevPosts;
+      return mapping;
+    }, {});
+    return postIds.map((id) => postIdsToMap[id]);
+  });
+}
