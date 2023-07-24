@@ -142,11 +142,11 @@ export const deletePostField = {
 
 // Data loader
 export function postsDataLoader(fastify: FastifyInstance) {
-  return new DataLoader(async (postIds: readonly string[]) => {
+  return new DataLoader(async (ids: readonly string[]) => {
     const posts = await fastify.prisma.post.findMany({
       where: {
         authorId: {
-          in: postIds as string[],
+          in: ids as string[],
         },
       },
     });
@@ -159,6 +159,6 @@ export function postsDataLoader(fastify: FastifyInstance) {
       mapping[post.authorId] = prevPosts;
       return mapping;
     }, {});
-    return postIds.map((id) => postIdsToMap[id]);
+    return ids.map((id) => postIdsToMap[id]);
   });
 }

@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { FastifyInstance } from 'fastify';
+import DataLoader from 'dataloader';
 import {
   GraphQLBoolean,
   GraphQLInputObjectType,
@@ -56,16 +57,13 @@ export const profileByIdField = {
   resolve: getProfilesByIdResolver,
 };
 
+// From parent resolvers
 export async function getProfilesByUserIdResolver(
   parent: { id: string },
   _args,
   ctx: ContextType,
 ) {
-  return await ctx.fastify.prisma.profile.findUnique({
-    where: {
-      userId: parent.id,
-    },
-  });
+  return await ctx.dataLoaders.profile.load(parent.id);
 }
 
 // Mutations(create)
@@ -157,3 +155,18 @@ export const deleteProfileField = {
   },
   resolve: deleteProfileResolver,
 };
+
+// Data loader
+export function profileDataLoader(fastify: FastifyInstance) {
+  return new DataLoader(async (ids: readonly string[]) => {
+    const profiles = await fastify.prisma.profile.findMany({
+      where: {
+        userId: {
+          in: ids as string[],
+        },
+      },
+    });
+
+    return ids.map((id) => profiles.find((profile) => profile.userId === id));
+  });
+}

@@ -79,11 +79,11 @@ export interface IMemberType {
 
 // Data loader
 export function memberTypesDataLoader(fastify: FastifyInstance) {
-  return new DataLoader(async (memberTypeIds: readonly string[]) => {
+  return new DataLoader(async (ids: readonly string[]) => {
     const memberTypes = await fastify.prisma.memberType.findMany({
       where: {
         id: {
-          in: memberTypeIds as string[],
+          in: ids as string[],
         },
       },
     });
@@ -95,6 +95,6 @@ export function memberTypesDataLoader(fastify: FastifyInstance) {
       },
       {},
     );
-    return memberTypeIds.map((id) => memberTypeIdsToMap[id]);
+    return ids.map((id) => memberTypeIdsToMap[id]);
   });
 }
