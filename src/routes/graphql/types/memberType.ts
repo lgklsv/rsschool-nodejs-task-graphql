@@ -24,6 +24,12 @@ export const MemberTypeIdEnum = new GraphQLEnumType({
   },
 });
 
+export interface IMemberType {
+  id: MemberTypeId;
+  discount: number;
+  postsLimitPerMonth: number;
+}
+
 export const MemberType = new GraphQLObjectType({
   name: 'MemberType',
   fields: () => ({
@@ -69,12 +75,6 @@ export async function getMemberTypeByProfileIdResolver(
   ctx: ContextType,
 ) {
   return await ctx.dataLoaders.memberType.load(parent.memberTypeId);
-}
-
-export interface IMemberType {
-  id: MemberTypeId;
-  discount: number;
-  postsLimitPerMonth: number;
 }
 
 // Data loader
