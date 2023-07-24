@@ -47,25 +47,11 @@ async function getMemberTypeByIdResolver(
   args: { id: string },
   fastify: FastifyInstance,
 ) {
-  const memberType = await fastify.prisma.memberType.findUnique({
+  return await fastify.prisma.memberType.findUnique({
     where: {
       id: args.id,
     },
   });
-  return memberType;
-}
-
-export async function getMemberTypeByProfileIdResolver(
-  parent: { memberTypeId: MemberTypeId },
-  _args,
-  fastify: FastifyInstance,
-) {
-  const memberType = await fastify.prisma.memberType.findUnique({
-    where: {
-      id: parent.memberTypeId,
-    },
-  });
-  return memberType;
 }
 
 export const memberTypeByIdField = {
@@ -73,3 +59,15 @@ export const memberTypeByIdField = {
   args: { id: { type: MemberTypeIdEnum } },
   resolve: getMemberTypeByIdResolver,
 };
+
+export async function getMemberTypeByProfileIdResolver(
+  parent: { memberTypeId: MemberTypeId },
+  _args,
+  fastify: FastifyInstance,
+) {
+  return await fastify.prisma.memberType.findUnique({
+    where: {
+      id: parent.memberTypeId,
+    },
+  });
+}
